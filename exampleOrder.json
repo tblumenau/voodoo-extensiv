@@ -1,0 +1,378 @@
+{
+  "tplId": 9104,
+  "wmsEventId": 187450321,
+  "dateTime": "2026-02-11T16:42:19.0630000",
+  "eventDatetimeUtc": "2026-02-11T16:42:19.0630000",
+  "warehouseTransactionEventId": 187450321,
+  "createDatetimeUtc": "2026-02-11T16:43:08.2430000",
+  "eventType": "OrderUpdate",
+  "resource": {
+    "rel": "orders/order",
+    "href": "/orders/31004581?detail=OrderItems,SavedElements,Packages,OutboundSerialNumbers,SmallParcel,ParcelOptions&itemdetail=SavedElements,Allocations,AllocationsWithDetail",
+    "body": {
+      "readOnly": {
+        "orderId": 31004581,
+        "asnCandidate": 0,
+        "routeCandidate": 0,
+        "fullyAllocated": true,
+        "deferNotification": false,
+        "isClosed": false,
+        "pickStarted": false,
+        "packStarted": false,
+        "loadedState": 0,
+        "routeSent": false,
+        "asnSent": false,
+        "packages": [],
+        "shippingPallets": [],
+        "outboundSerialNumbers": [],
+        "parcelLabelType": 0,
+        "customerIdentifier": {
+          "name": "Harbor Botanicals",
+          "id": 418
+        },
+        "facilityIdentifier": {
+          "name": "Primary Warehouse",
+          "id": 12
+        },
+        "warehouseTransactionSourceType": 7,
+        "transactionEntryType": 2,
+        "creationDate": "2025-02-03T11:18:22.71",
+        "createdByIdentifier": {
+          "name": "Alex Carter",
+          "id": 2101
+        },
+        "lastModifiedDate": "2026-02-11T12:42:17.05",
+        "lastModifiedByIdentifier": {
+          "name": "Morgan Lee",
+          "id": 2108
+        },
+        "status": 0,
+        "chargesPending": false
+      },
+      "referenceNum": "OR104582X",
+      "earliestShipDate": "2025-02-03T00:00:00",
+      "notes": "",
+      "numUnits1": 2,
+      "totalWeight": 0.5,
+      "totalVolume": 0,
+      "billingCode": "Prepaid",
+      "addFreightToCod": false,
+      "upsIsResidential": false,
+      "fulfillInvInfo": {
+        "fulfillInvTax": 15.51,
+        "fulfillInvDiscountCode": "SPRINGDEMO",
+        "fulfillInvDiscountAmount": 16.09
+      },
+      "routingInfo": {
+        "isCod": false,
+        "isInsurance": false,
+        "requiresDeliveryConf": false,
+        "requiresReturnReceipt": false,
+        "scacCode": "DHLC",
+        "carrier": "DHL eCommerce",
+        "mode": "349"
+      },
+      "savedElements": [],
+      "parcelOption": {
+        "orderId": 31004581,
+        "deliveryConfirmationType": "",
+        "deliveredDutyPaid": 0,
+        "dryIceWeight": 0,
+        "insuranceAmount": 0,
+        "insuranceType": 0,
+        "internationalContentsType": "",
+        "internationalNonDelivery": "",
+        "orderScannedFlag": false,
+        "residentialFlag": false,
+        "saturdayDeliveryFlag": false,
+        "taxIdentifiers": "",
+        "carrierAccountNumber": "",
+        "carrierSelectionV2": false,
+        "shipDate": "",
+        "chosenRate": ""
+      },
+      "_links": {
+        "self": {
+          "href": "/orders/31004581?detail=OrderItems%2CSavedElements%2CPackages%2COutboundSerialNumbers%2CSmallParcel%2CParcelOptions&itemdetail=All%2CAllocationsWithDetail"
+        },
+        "edit": {
+          "href": "/orders/31004581{?detail,itemdetail,recalcautocharges}",
+          "templated": true
+        },
+        "http://api.3plcentral.com/rels/orders/fulfillinv": {
+          "href": "/orders/31004581/fulfillinv"
+        },
+        "http://api.3plcentral.com/rels/orders/orderrouting": {
+          "href": "/orders/31004581/routing"
+        },
+        "http://api.3plcentral.com/rels/orders/items": {
+          "href": "/orders/31004581/items{?detail,validateoveralloc}",
+          "templated": true
+        },
+        "http://api.3plcentral.com/rels/orders/packages": {
+          "href": "/orders/31004581/packages{?calculateweight,calculatedims,deleteallcontents}",
+          "templated": true
+        },
+        "http://api.3plcentral.com/rels/customers/customer": {
+          "href": "/customers/418"
+        },
+        "http://api.3plcentral.com/rels/properties/facility": {
+          "href": "/properties/facilities/12"
+        },
+        "http://api.3plcentral.com/rels/orders/ordercancel": {
+          "href": "/orders/31004581/canceler"
+        },
+        "http://api.3plcentral.com/rels/orders/orderconfirm": {
+          "href": "/orders/31004581/confirmer"
+        },
+        "http://api.3plcentral.com/rels/orders/packagesgenerate": {
+          "href": "/orders/31004581/packages/generator{?overridesummary}",
+          "templated": true
+        },
+        "http://api.3plcentral.com/rels/orders/packagesconsolidate": {
+          "href": "/orders/31004581/packages/consolidator{?packagedefid,overridesummary}",
+          "templated": true
+        },
+        "http://api.3plcentral.com/rels/orders/packagessummarize": {
+          "href": "/orders/31004581/packages/summarizer"
+        },
+        "http://api.3plcentral.com/rels/inventory/stocksummariesfororder": {
+          "href": "/inventory/stocksummariesfororder?orderid=31004581"
+        },
+        "http://api.3plcentral.com/rels/orders/orderdeallocate": {
+          "href": "/orders/31004581/deallocator"
+        },
+        "http://api.3plcentral.com/rels/orders/orderfilesummaries": {
+          "href": "/orders/31004581/filesummaries"
+        },
+        "http://api.3plcentral.com/rels/customers/itemsummaries": {
+          "href": "/customers/418/itemsummaries?orderid=31004581"
+        },
+        "http://api.3plcentral.com/rels/orders/orderasnmark": {
+          "href": "/orders/31004581/asnmarker"
+        },
+        "http://api.3plcentral.com/rels/orders/orderasnsent": {
+          "href": "/orders/31004581/asnsentmarker"
+        },
+        "http://api.3plcentral.com/rels/orders/orderpickticketdatesetter": {
+          "href": "/orders/31004581/pickticketdatesetter"
+        },
+        "http://api.3plcentral.com/rels/orders/orderpackstarter": {
+          "href": "/orders/31004581/packstarter"
+        },
+        "http://api.3plcentral.com/rels/orders/bolgenerate": {
+          "href": "/orders/31004581/bolidgenerator{?bolnumastransnum}",
+          "templated": true
+        },
+        "http://api.3plcentral.com/rels/orders/pickjob": {
+          "href": "/orders/pickjobs/2044"
+        },
+        "http://api.3plcentral.com/rels/orders/ordertransfer": {
+          "href": "/orders/31004581/transferrer{?tofacilityid}",
+          "templated": true
+        },
+        "http://api.3plcentral.com/rels/orders/savedelements": {
+          "href": "/orders/31004581/savedelements"
+        },
+        "http://api.3plcentral.com/rels/orders/item": {
+          "href": "/orders/{id}/items/{iid}{?detail,validateoveralloc}",
+          "templated": true
+        }
+      },
+      "_embedded": {
+        "http://api.3plCentral.com/rels/orders/item": [
+          {
+            "readOnly": {
+              "orderItemId": 50123011,
+              "fullyAllocated": true,
+              "unitIdentifier": {
+                "name": "Each",
+                "id": 1
+              },
+              "originalPrimaryQty": 1,
+              "isOrderQtySecondary": false,
+              "allocations": [
+                {
+                  "receiveItemId": 660112,
+                  "qty": 1,
+                  "properlyPickedPrimary": 0,
+                  "properlyPickedSecondary": 0,
+                  "loadedOut": false,
+                  "rowVersion": "AAAAACNizQw",
+                  "detail": {
+                    "itemTraits": {
+                      "itemIdentifier": {
+                        "sku": "DEMO1001",
+                        "id": 61001
+                      },
+                      "qualifier": "",
+                      "expirationDate": "2028-02-01T00:00:00",
+                      "palletIdentifier": {
+                        "nameKey": {
+                          "facilityIdentifier": {
+                            "name": "Primary Warehouse",
+                            "id": 12
+                          },
+                          "name": "PAL-1001"
+                        },
+                        "id": 304510
+                      }
+                    },
+                    "locationIdentifier": {
+                      "nameKey": {
+                        "facilityIdentifier": {
+                          "name": "Primary Warehouse",
+                          "id": 12
+                        },
+                        "name": "A1-09-02"
+                      },
+                      "id": 7101
+                    },
+                    "locationSort": {
+                      "field1": "101",
+                      "field2": "109",
+                      "field3": "102",
+                      "field4": ""
+                    },
+                    "savedElements": []
+                  }
+                }
+              ],
+              "isInsert": false,
+              "maxToAllocateFromPickLine": 0,
+              "rowVersion": "AAAAACNizQo"
+            },
+            "itemIdentifier": {
+              "sku": "DEMO1001",
+              "id": 61001
+            },
+            "qualifier": "",
+            "qty": 1,
+            "weightImperial": 0.4,
+            "weightMetric": 0.1814,
+            "fulfillInvSalePrice": 121.21,
+            "fulfillInvDiscountAmt": 12.12,
+            "savedElements": [],
+            "isInsert": false,
+            "_links": {
+              "self": {
+                "href": "/orders/31004581/items/50123011?detail=All%2CAllocationsWithDetail"
+              },
+              "edit": {
+                "href": "/orders/31004581/items/50123011{?detail,validateoveralloc}",
+                "templated": true
+              },
+              "http://api.3plcentral.com/rels/customers/item": {
+                "href": "/customers/418/items/61001"
+              },
+              "http://api.3plcentral.com/rels/customers/itemsummary": {
+                "href": "/customers/418/itemsummaries/61001"
+              },
+              "http://api.3plcentral.com/rels/orders/order": {
+                "href": "/orders/31004581"
+              },
+              "http://api.3plcentral.com/rels/orders/itemallocate": {
+                "href": "/orders/31004581/items/50123011/allocator"
+              },
+              "http://api.3plcentral.com/rels/orders/itemdeallocate": {
+                "href": "/orders/31004581/items/50123011/deallocator"
+              }
+            }
+          },
+          {
+            "readOnly": {
+              "orderItemId": 50123012,
+              "fullyAllocated": true,
+              "unitIdentifier": {
+                "name": "Each",
+                "id": 1
+              },
+              "originalPrimaryQty": 1,
+              "isOrderQtySecondary": false,
+              "allocations": [
+                {
+                  "receiveItemId": 660113,
+                  "qty": 1,
+                  "properlyPickedPrimary": 0,
+                  "properlyPickedSecondary": 0,
+                  "loadedOut": false,
+                  "rowVersion": "AAAAACNizQ4",
+                  "detail": {
+                    "itemTraits": {
+                      "itemIdentifier": {
+                        "sku": "DEMO2002",
+                        "id": 61002
+                      },
+                      "qualifier": "",
+                      "lotNumber": "LT-2027-0001",
+                      "expirationDate": "2027-10-01T00:00:00"
+                    },
+                    "locationIdentifier": {
+                      "nameKey": {
+                        "facilityIdentifier": {
+                          "name": "Primary Warehouse",
+                          "id": 12
+                        },
+                        "name": "B2-04-03"
+                      },
+                      "id": 7102
+                    },
+                    "locationSort": {
+                      "field1": "B2",
+                      "field2": "204",
+                      "field3": "203",
+                      "field4": ""
+                    },
+                    "savedElements": []
+                  }
+                }
+              ],
+              "isInsert": false,
+              "maxToAllocateFromPickLine": 0,
+              "rowVersion": "AAAAACNizQs"
+            },
+            "itemIdentifier": {
+              "sku": "DEMO2002",
+              "id": 61002
+            },
+            "qualifier": "",
+            "qty": 1,
+            "weightImperial": 0.1,
+            "weightMetric": 0.0454,
+            "fulfillInvSalePrice": 39.68,
+            "fulfillInvDiscountAmt": 3.97,
+            "savedElements": [],
+            "isInsert": false,
+            "_links": {
+              "self": {
+                "href": "/orders/31004581/items/50123012?detail=All%2CAllocationsWithDetail"
+              },
+              "edit": {
+                "href": "/orders/31004581/items/50123012{?detail,validateoveralloc}",
+                "templated": true
+              },
+              "http://api.3plcentral.com/rels/customers/item": {
+                "href": "/customers/418/items/61002"
+              },
+              "http://api.3plcentral.com/rels/customers/itemsummary": {
+                "href": "/customers/418/itemsummaries/61002"
+              },
+              "http://api.3plcentral.com/rels/orders/order": {
+                "href": "/orders/31004581"
+              },
+              "http://api.3plcentral.com/rels/orders/itemallocate": {
+                "href": "/orders/31004581/items/50123012/allocator"
+              },
+              "http://api.3plcentral.com/rels/orders/itemdeallocate": {
+                "href": "/orders/31004581/items/50123012/deallocator"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "links": "{\"uiproperties/user\":{\"LastModifiedBy\":\"/uiproperties/users/2108\"},\"customers/customer\":\"/customers/418\",\"properties/facility\":\"/properties/facilities/12\"}",
+  "data": "{\"OrderId\":\"31004581\"}",
+  "tags": "Demo"
+}

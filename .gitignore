@@ -1,0 +1,8 @@
+.env
+certs/
+__pycache__/
+*.pyc
+*.log
+.vscode/
+webhook.log
+extensiv_public_key_cache.json

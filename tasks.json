@@ -1,0 +1,13 @@
+{
+  "OrderPickJobUserAssigned": [
+    "DELETE",
+    "ADD"
+  ],
+  "OrderPickJobUserUnassigned": [
+    "DELETE",
+    "ADD"
+  ],
+  "OrderExcludedFromPickJob": [
+    "DELETE"
+  ]
+}
