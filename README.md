@@ -1,28 +1,48 @@
-# Extensiv Webhook Receiver
+# Extensiv to Voodoo Devices Demo
 
-> **This is example/demonstration code** for learning how to build a webhook
-> receiver in Python.  It is intentionally over-commented to help developers
-> who are new to web servers, TLS, and REST APIs understand every decision.
+> **This repository is sample integration code** showing how to connect
+> Extensiv to Voodoo Robotics devices and automatically turn Extensiv order
+> events into commands for a Voodoo-powered workflow. The code is intentionally
+> over-commented so it can be copied, modified, and adapted to real deployments.
 
 Receives HTTPS webhook POST requests from Extensiv's 3PL Warehouse Manager,
 parses order events, extracts a pick list (SKU, quantity, location, lot) from
-each order's allocations, and forwards orders to the Voodoo Robotics API.
+each order's allocations, and forwards orders to the Voodoo Robotics API so
+Voodoo Robotics devices can act on those instructions.
+
+Voodoo Robotics:
+[https://voodoorobotics.com/](https://voodoorobotics.com/)
 
 ## Files in this project
 
 | File | Purpose |
 |------|--------|
-| `server.py` | **Main receiver** — parses orders, extracts picks, and syncs with Voodoo. This is the primary file to study and modify. |
+| `server.py` | **Main integration service** — receives Extensiv webhooks, validates them, extracts picks, and syncs orders to Voodoo. |
 | `basicExtensivReceiver.py` | **Demo/reference** — an earlier, simpler version that just prints raw headers and the Extensiv payload envelope. Kept as a learning reference. |
 | `exampleOrder.json` | A real-world Extensiv webhook payload captured from the sandbox. Use this to understand the JSON structure without needing a live connection. |
+| `tasks.json` | Maps Extensiv event types to ordered actions so the integration can automate the Voodoo side without hard-coding behavior in Python. |
 | `.env` | Your local configuration (port, certificate paths, log file, API keys). Never committed to git. |
 | `.env.example` | Template showing all available settings. Copy this to `.env` to get started. |
+| `LICENSE` | MIT license granting broad permission to use, copy, modify, and redistribute this code. |
 
 ## Setup
 
 ```bash
 pip install -r requirements.txt
 ```
+
+## What This Demo Shows
+
+This repository demonstrates the full integration path:
+
+1. Extensiv sends webhook events over HTTPS.
+2. The server validates the webhook source and signature.
+3. The payload is translated into picks and order actions.
+4. Those actions are sent to the Voodoo Robotics API.
+5. Voodoo Robotics devices can then respond to the resulting workflow.
+
+This is not just a generic Extensiv webhook example. It is a working reference
+for connecting Extensiv operations to Voodoo Robotics device automation.
 
 ## Configuration
 
@@ -177,3 +197,18 @@ PICKS:    2 allocation(s)
 
 All log messages (including those from non-order events, errors, and TLS
 handshake failures) are also written to the log file specified by `LOG_FILE`.
+
+## License and Reuse
+
+This repository is released under the MIT License. See [LICENSE](LICENSE).
+
+That means you can:
+
+1. Copy the code.
+2. Modify it.
+3. Use it internally or commercially.
+4. Redistribute it.
+5. Build your own version on top of it.
+
+This project is provided as reusable sample integration code. No claim is made
+that you must keep your changes private or ask for permission to adapt it.
