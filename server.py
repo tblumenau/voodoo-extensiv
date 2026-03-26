@@ -53,7 +53,8 @@ SUPPORTED EVENTS
             "OrderExcludedFromPickJob": ["DELETE"]
         }
 
-  Available actions: DELETE (remove order from Voodoo), ADD (create order).
+  Available actions: DELETE (remove order from Voodoo), ADD (create order),
+    LAUNCH (launch order), ABORT (abort order).
     Events not listed in the task file are logged and ignored.
 
 CONFIGURATION (.env file)
@@ -76,28 +77,32 @@ CONFIGURATION (.env file)
 # ---------------------------------------------------------------------------
 # Standard library imports
 # ---------------------------------------------------------------------------
-import base64     # for decoding the base64-encoded RSA signature
-import json       # for parsing the JSON webhook payload
-import logging    # for structured logging to console AND file
-import os         # for reading environment variables and file paths
-import ssl        # for TLS (HTTPS) support
-import sys        # for sys.exit() on fatal errors
+import base64  # for decoding the base64-encoded RSA signature
+import json  # for parsing the JSON webhook payload
+import logging  # for structured logging to console AND file
+import os  # for reading environment variables and file paths
+import ssl  # for TLS (HTTPS) support
+import sys  # for sys.exit() on fatal errors
 import traceback  # for printing full stack traces on errors
-import requests   # for making HTTP requests to Voodoo's API
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 #   HTTPServer             — the base TCP server that listens for connections
 #   BaseHTTPRequestHandler — base class we subclass to handle POST/GET requests
 from socketserver import ThreadingMixIn
+
+import requests  # for making HTTP requests to Voodoo's API
+
 #   ThreadingMixIn — makes each connection run in its own thread so multiple
 #                    simultaneous webhook deliveries don't block each other
-
 # ---------------------------------------------------------------------------
 # Third-party imports (install via: pip install -r requirements.txt)
 # ---------------------------------------------------------------------------
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+
 #   Used to verify RSA-SHA256 signatures from Extensiv when TIGHT_SECURITY is on
 from dotenv import load_dotenv
+
 #   load_dotenv() reads key=value pairs from a .env file into os.environ
 
 
@@ -113,11 +118,15 @@ def load_cached_extensiv_key(cache_file_path):
         with open(cache_file_path, "r", encoding="utf-8") as file_obj:
             key_payload = json.load(file_obj)
     except (OSError, json.JSONDecodeError) as e:
-        logger.warning("Failed to read cached Extensiv key file %s: %s", cache_file_path, e)
+        logger.warning(
+            "Failed to read cached Extensiv key file %s: %s", cache_file_path, e
+        )
         return None
 
     if not key_payload.get("publicKey"):
-        logger.warning("Cached Extensiv key file %s does not contain publicKey", cache_file_path)
+        logger.warning(
+            "Cached Extensiv key file %s does not contain publicKey", cache_file_path
+        )
         return None
 
     return key_payload
@@ -143,7 +152,9 @@ def refresh_extensiv_public_key(cache_file_path):
         if cached_key_payload and cached_key_payload.get("retrievalDateISO"):
             response = requests.post(
                 EXTENSIV_WEBHOOK_KEY_URL,
-                json={"previousRetrievalDateISO": cached_key_payload["retrievalDateISO"]},
+                json={
+                    "previousRetrievalDateISO": cached_key_payload["retrievalDateISO"]
+                },
                 timeout=request_timeout,
             )
 
@@ -173,8 +184,11 @@ def refresh_extensiv_public_key(cache_file_path):
         return public_key
 
     except (requests.RequestException, ValueError, OSError) as e:
-        logger.warning("Failed to refresh Extensiv public key from %s: %s",
-                       EXTENSIV_WEBHOOK_KEY_URL, e)
+        logger.warning(
+            "Failed to refresh Extensiv public key from %s: %s",
+            EXTENSIV_WEBHOOK_KEY_URL,
+            e,
+        )
 
     if cached_key_payload and cached_key_payload.get("publicKey"):
         logger.warning("Using cached Extensiv public key from %s", cache_file_path)
@@ -500,8 +514,10 @@ class WebhookHandler(BaseHTTPRequestHandler):
         if self.server.tight_security:
             sig_header = self.headers.get("Signature", "")
             if not sig_header:
-                logger.warning("TIGHT_SECURITY: rejected request from %s — missing Signature header",
-                               self.client_address[0])
+                logger.warning(
+                    "TIGHT_SECURITY: rejected request from %s — missing Signature header",
+                    self.client_address[0],
+                )
                 self.send_response(403)
                 self.send_header("Content-Type", "text/plain")
                 self.end_headers()
@@ -512,22 +528,24 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 try:
                     signature_bytes = base64.b64decode(sig_header)
                     self.server.extensiv_public_key.verify(
-                        signature_bytes,
-                        raw_body,
-                        padding.PKCS1v15(),
-                        hashes.SHA256()
+                        signature_bytes, raw_body, padding.PKCS1v15(), hashes.SHA256()
                     )
                     logger.debug("Extensiv RSA signature verified successfully")
                 except Exception as e:
-                    logger.warning("TIGHT_SECURITY: rejected request from %s — invalid signature: %s",
-                                   self.client_address[0], e)
+                    logger.warning(
+                        "TIGHT_SECURITY: rejected request from %s — invalid signature: %s",
+                        self.client_address[0],
+                        e,
+                    )
                     self.send_response(403)
                     self.send_header("Content-Type", "text/plain")
                     self.end_headers()
                     self.wfile.write(b"Forbidden: invalid Extensiv signature\n")
                     return
             else:
-                logger.debug("Signature header present but verification key is unavailable")
+                logger.debug(
+                    "Signature header present but verification key is unavailable"
+                )
 
         # ------------------------------------------------------------------
         # Step 2: Reply with HTTP 200 immediately
@@ -544,10 +562,12 @@ class WebhookHandler(BaseHTTPRequestHandler):
         # ------------------------------------------------------------------
         # Step 3: Log the incoming request details
         # ------------------------------------------------------------------
-        logger.info("Received POST %s from %s:%s",
-                     self.path,
-                     self.client_address[0],
-                     self.client_address[1])
+        logger.info(
+            "Received POST %s from %s:%s",
+            self.path,
+            self.client_address[0],
+            self.client_address[1],
+        )
 
         # Log all HTTP headers (useful for debugging)
         for name, value in self.headers.items():
@@ -615,7 +635,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
             if pick["lot"]:
                 print(f"    Lot      : {pick['lot']}")
             else:
-                print(f"    Lot      : (none)")
+                print("    Lot      : (none)")
 
         print("=" * 60)
         print()
@@ -623,9 +643,14 @@ class WebhookHandler(BaseHTTPRequestHandler):
         # Also log the picks so they appear in the log file
         logger.info("Order %s: %d pick(s) extracted", order_id, len(picks))
         for i, pick in enumerate(picks, start=1):
-            logger.info("  Pick %d: qty=%d  sku=%s  location=%s  lot=%s",
-                         i, pick["qty"], pick["sku"], pick["location"],
-                         pick["lot"] or "(none)")
+            logger.info(
+                "  Pick %d: qty=%d  sku=%s  location=%s  lot=%s",
+                i,
+                pick["qty"],
+                pick["sku"],
+                pick["location"],
+                pick["lot"] or "(none)",
+            )
 
         # ------------------------------------------------------------------
         # Step 7: Forward to the Voodoo Robotics API
@@ -649,19 +674,20 @@ class WebhookHandler(BaseHTTPRequestHandler):
         if not voodoo_api_endpoint or not voodoo_api_key:
             logger.warning("VOODOO_API_ENDPOINT or VOODOO_API_KEY not set in .env file")
             return
-        
+
         # Build the endpoint URLs for this specific order:
         #   order_endpoint  — base URL; POST new orders here
         #   delete_endpoint — append the order ID to target a specific order
+        #   launch_endpoint — launch the order on Voodoo
+        #   abort_endpoint  — abort the order on Voodoo
         order_endpoint = f"{voodoo_api_endpoint}/orders/"
         delete_endpoint = f"{order_endpoint}{order_id}/"
+        launch_endpoint = f"{order_endpoint}{order_id}/launch/"
+        abort_endpoint = f"{order_endpoint}{order_id}/abort/"
 
         # The API-Key header is Voodoo's authentication mechanism.
         # Content-Type tells Voodoo we are sending JSON in the request body.
-        headers = {
-            "API-Key": voodoo_api_key,
-            "Content-Type": "application/json"
-        }
+        headers = {"API-Key": voodoo_api_key, "Content-Type": "application/json"}
 
         # ------------------------------------------------------------------
         # Look up the task list for this event type from the task config.
@@ -673,6 +699,8 @@ class WebhookHandler(BaseHTTPRequestHandler):
         # Supported actions:
         #   DELETE — remove the order from Voodoo (errors are non-fatal)
         #   ADD    — POST the order to Voodoo
+        #   LAUNCH — POST to api/order/<orderid>/launch/ on Voodoo
+        #   ABORT  — POST to api/order/<orderid>/abort/ on Voodoo
         # ------------------------------------------------------------------
         tasks = self.server.tasks_config
         if tasks is None:
@@ -684,10 +712,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
             return
 
         # Build the order payload (used by the ADD action)
-        new_order = {
-            "order_number": order_id,
-            "items": []
-        }
+        new_order = {"order_number": order_id, "items": []}
         for pick in picks:
             item = {
                 "SKU": pick["sku"],
@@ -707,23 +732,52 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 try:
                     response = requests.delete(delete_endpoint, headers=headers)
                     response.raise_for_status()
-                    logger.info("Deleted order from Voodoo (status %s)", response.status_code)
+                    logger.info(
+                        "Deleted order from Voodoo (status %s)", response.status_code
+                    )
                 except requests.RequestException as e:
                     logger.warning("Delete failed (order may not exist yet): %s", e)
 
             elif action == "ADD":
                 try:
-                    response = requests.post(order_endpoint, headers=headers, json=new_order)
+                    response = requests.post(
+                        order_endpoint, headers=headers, json=new_order
+                    )
                     response.raise_for_status()
                     logger.info("Created order in Voodoo: %s", response.json())
                 except requests.RequestException as e:
                     logger.error("Failed to create order in Voodoo: %s", e)
                     logger.debug("Request payload: %s", json.dumps(new_order, indent=2))
 
+            elif action == "LAUNCH":
+                try:
+                    response = requests.post(launch_endpoint, headers=headers)
+                    response.raise_for_status()
+                    logger.info(
+                        "Launched order %s in Voodoo (status %s)",
+                        order_id,
+                        response.status_code,
+                    )
+                except requests.RequestException as e:
+                    logger.error("Failed to launch order %s in Voodoo: %s", order_id, e)
+
+            elif action == "ABORT":
+                try:
+                    response = requests.post(abort_endpoint, headers=headers)
+                    response.raise_for_status()
+                    logger.info(
+                        "Aborted order %s in Voodoo (status %s)",
+                        order_id,
+                        response.status_code,
+                    )
+                except requests.RequestException as e:
+                    logger.error("Failed to abort order %s in Voodoo: %s", order_id, e)
+
             else:
-                logger.warning("Unknown task action '%s' for event '%s'", action, event_type)
-        
-    
+                logger.warning(
+                    "Unknown task action '%s' for event '%s'", action, event_type
+                )
+
     # ------------------------------------------------------------------
     # do_GET — simple health check
     #
@@ -788,12 +842,18 @@ def main():
     # ------------------------------------------------------------------
     # TIGHT_SECURITY — require HTTPS and verify Extensiv signatures
     # ------------------------------------------------------------------
-    tight_security = os.environ.get("TIGHT_SECURITY", "").strip().lower() in ("1", "true", "yes")
+    tight_security = os.environ.get("TIGHT_SECURITY", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
     if tight_security:
         if not use_tls:
-            logger.error("TIGHT_SECURITY is enabled but TLS_CERT_FILE / TLS_KEY_FILE are not set. "
-                         "HTTPS is required when TIGHT_SECURITY is on.")
+            logger.error(
+                "TIGHT_SECURITY is enabled but TLS_CERT_FILE / TLS_KEY_FILE are not set. "
+                "HTTPS is required when TIGHT_SECURITY is on."
+            )
             sys.exit(1)
 
         pub_key_cache_file = os.environ.get(
@@ -802,11 +862,15 @@ def main():
         ).strip()
         public_key_pem = refresh_extensiv_public_key(pub_key_cache_file)
         if not public_key_pem:
-            logger.error("TIGHT_SECURITY is enabled but no Extensiv public key is available. Exiting.")
+            logger.error(
+                "TIGHT_SECURITY is enabled but no Extensiv public key is available. Exiting."
+            )
             sys.exit(1)
 
         try:
-            server.extensiv_public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+            server.extensiv_public_key = serialization.load_pem_public_key(
+                public_key_pem.encode("utf-8")
+            )
         except ValueError as e:
             logger.error("Failed to parse Extensiv public key: %s", e)
             sys.exit(1)

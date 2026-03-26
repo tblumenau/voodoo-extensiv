@@ -167,7 +167,92 @@ EOF
 chmod +x /etc/letsencrypt/renewal-hooks/deploy/restart-webhook.sh'
 ```
 
-## Run
+## Running as a systemd service (Ubuntu / Debian and other systemd distributions)
+
+For a persistent deployment, install the server as a systemd service so it
+starts automatically on boot and restarts after failures.
+
+### 1. Create the unit file
+
+```bash
+sudo nano /etc/systemd/system/extensiv-receiver.service
+```
+
+Paste the following, adjusting `WorkingDirectory` and `ExecStart` to your
+actual installation path:
+
+```ini
+[Unit]
+Description=Extensiv Webhook Receiver
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/ubuntu/voodoo-extensiv
+ExecStart=/usr/bin/python3 /home/ubuntu/voodoo-extensiv/server.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+> **Note:** `User=root` is required if the TLS private key under
+> `/etc/letsencrypt/live/` is root-only readable (the default for Let's
+> Encrypt certificates). If you relax those permissions or copy the key to a
+> location readable by a less-privileged user, change `User=` accordingly.
+
+### 2. Enable and start the service
+
+```bash
+# Reload systemd so it picks up the new unit file
+sudo systemctl daemon-reload
+
+# Enable the service to start automatically at boot
+sudo systemctl enable extensiv-receiver
+
+# Start it now
+sudo systemctl start extensiv-receiver
+```
+
+### 3. Check status and logs
+
+```bash
+# Service status (running / failed / restart count, etc.)
+sudo systemctl status extensiv-receiver
+
+# Live log tail
+sudo journalctl -u extensiv-receiver -f
+
+# Last 100 lines
+sudo journalctl -u extensiv-receiver -n 100
+```
+
+### 4. Restarting after a configuration change
+
+```bash
+sudo systemctl restart extensiv-receiver
+```
+
+### 5. Certificate renewal and automatic restart
+
+When certbot renews the TLS certificate the server must be restarted to load
+the new files. Add a deploy hook so this happens automatically:
+
+```bash
+sudo bash -c 'cat > /etc/letsencrypt/renewal-hooks/deploy/restart-extensiv-receiver.sh << "EOF"
+#!/bin/sh
+systemctl restart extensiv-receiver
+EOF
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/restart-extensiv-receiver.sh'
+```
+
+---
+
+## Run manually
 
 ```bash
 # The server needs root to read Let's Encrypt certificate files

@@ -1,7 +1,8 @@
 {
   "OrderPickJobUserAssigned": [
     "DELETE",
-    "ADD"
+    "ADD",
+    "LAUNCH"
   ],
   "OrderPickJobUserUnassigned": [
     "DELETE",
