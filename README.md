@@ -54,6 +54,7 @@ Copy `.env.example` to `.env` and set:
 | `TLS_CERT_FILE`                               | Path to TLS fullchain file                    | —                                     |
 | `TLS_KEY_FILE`                                | Path to TLS private key file                  | —                                     |
 | `LOG_FILE`                                    | Path to the log file                          | `webhook.log`                         |
+| `LOG_LEVEL`                                   | Logging threshold: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` | `INFO`            |
 | `VOODOO_API_ENDPOINT`                         | Base URL of the Voodoo Orders API             | —                                     |
 | `VOODOO_API_KEY`                              | API key for Voodoo authentication             | —                                     |
 | `TASKS_FILE`                                  | Path to JSON file with event actions          | `tasks.json`                          |
@@ -110,6 +111,7 @@ The cache file stores Extensiv's response structure directly:
 Example `.env` settings:
 
 ```env
+LOG_LEVEL=INFO
 TIGHT_SECURITY=true
 EXTENSIV_PUBLIC_KEY_CACHE_FILE=extensiv_public_key_cache.json
 ```
@@ -142,6 +144,7 @@ Set your `.env` accordingly:
 SERVER_PORT=8443
 TLS_CERT_FILE=/etc/letsencrypt/live/your.domain.com/fullchain.pem
 TLS_KEY_FILE=/etc/letsencrypt/live/your.domain.com/privkey.pem
+LOG_LEVEL=INFO
 ```
 
 > **Important:** Use `fullchain.pem`, not `cert.pem`. The full chain includes the intermediate CA certificates that clients need to verify trust. Using `cert.pem` alone will cause TLS handshake failures.

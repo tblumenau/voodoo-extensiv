@@ -62,6 +62,7 @@ CONFIGURATION (.env file)
     SERVER_PORT         — TCP port to listen on (default: 8443)
     TLS_CERT_FILE       — path to fullchain.pem (from Let's Encrypt)
     TLS_KEY_FILE        — path to privkey.pem
+    LOG_LEVEL           — logging threshold (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     LOG_FILE            — path to the log file (default: webhook.log)
     VOODOO_API_ENDPOINT — base URL of the Voodoo Robotics Orders API
     VOODOO_API_KEY      — API key used to authenticate with Voodoo
@@ -107,6 +108,16 @@ from dotenv import load_dotenv
 
 
 EXTENSIV_WEBHOOK_KEY_URL = "https://secure-wms.com/events/webhook/key"
+
+
+def parse_log_level(level_name):
+    """Convert a LOG_LEVEL string into a Python logging level."""
+    normalized_level = (level_name or "INFO").strip().upper()
+    level = getattr(logging, normalized_level, None)
+    if isinstance(level, int):
+        return level, normalized_level
+
+    return logging.INFO, "INFO"
 
 
 def load_cached_extensiv_key(cache_file_path):
@@ -239,16 +250,20 @@ def load_tasks_config():
 # The log file path comes from the LOG_FILE environment variable.  If the
 # file doesn't exist yet, Python's logging module creates it automatically.
 # ---------------------------------------------------------------------------
-def setup_logging(log_file_path):
+def setup_logging(log_file_path, log_level):
     """Configure logging to write to both the console and a log file.
 
     Args:
         log_file_path: Absolute or relative path to the log file.
                        Created automatically if it doesn't exist.
+        log_level: Python logging level name to apply to the root logger and handlers.
     """
+    resolved_log_level, resolved_log_level_name = parse_log_level(log_level)
+
     # Create the root logger — all log messages flow through this
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)  # capture everything; handlers filter
+    root_logger.setLevel(resolved_log_level)
+    root_logger.handlers.clear()
 
     # Define a consistent format for all log messages:
     #   2026-03-19 21:13:24,063 [INFO] Server started on port 8443
@@ -258,7 +273,7 @@ def setup_logging(log_file_path):
     # StreamHandler() defaults to sys.stderr; we use it so log messages
     # appear in the terminal alongside print() output.
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(resolved_log_level)
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
 
@@ -271,9 +286,16 @@ def setup_logging(log_file_path):
         os.makedirs(log_dir, exist_ok=True)
 
     file_handler = logging.FileHandler(log_file_path)
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(resolved_log_level)
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
+
+    if (log_level or "").strip().upper() != resolved_log_level_name:
+        root_logger.warning(
+            "Invalid LOG_LEVEL %r; defaulting to %s",
+            log_level,
+            resolved_log_level_name,
+        )
 
     return logging.getLogger(__name__)
 
@@ -357,6 +379,11 @@ def parse_picks_from_payload(payload):
 
         Returns (None, []) if the payload is not a recognized order event.
     """
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(
+            "Payload passed to parse_picks_from_payload:\n%s",
+            json.dumps(payload, indent=2, sort_keys=True),
+        )
 
     # -----------------------------------------------------------------------
     # Step 1: Extract the Order ID
@@ -815,6 +842,9 @@ def main():
     key_file = os.environ.get("TLS_KEY_FILE", "").strip()
     use_tls = bool(cert_file and key_file)
 
+    # LOG_LEVEL — logging threshold for console and file output.
+    log_level = os.environ.get("LOG_LEVEL", "INFO")
+
     # LOG_FILE — path to the log file.  Created if it doesn't exist.
     log_file = os.environ.get("LOG_FILE", "webhook.log").strip()
 
@@ -822,7 +852,8 @@ def main():
     # Set up logging (must happen before we use the logger)
     # ------------------------------------------------------------------
     global logger
-    logger = setup_logging(log_file)
+    logger = setup_logging(log_file, log_level)
+    logger.info("Log level: %s", parse_log_level(log_level)[1])
     logger.info("Log file: %s", os.path.abspath(log_file))
 
     tasks_config = load_tasks_config()
