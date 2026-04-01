@@ -73,6 +73,22 @@ Example:
 }
 ```
 
+## Configure the Extensiv webhook
+
+In Extensiv 3PL Manager, open `Customers > Event Notifications` and create a webhook with the following recommended settings:
+
+![Suggested Extensiv webhook configuration](docs/images/extensiv-webhook-configuration.svg)
+
+- `Webhook Scope`: `Any Customer`
+- `Description`: `Voodoo Integration`
+- `Destination URL`: `https://your.domain.com:8443/`
+- `Event Type`: `Order`
+- `Events`: `Excluded from pickjob`, `Pick job - user assigned`, `Pick job - user unassigned`
+- `Include Resources`: enable `Include resource in payload`
+- `Resource Options`: enable `Order custom fields`, `Packages`, `Order items`, `Contacts`, `Billing details`, `Outbound serial numbers`, `Small parcel`, `Allocations`, `Allocations with detail`, and `Parcel options`
+
+Replace `your.domain.com` with the public hostname on your TLS certificate. If you change `SERVER_PORT` in `.env`, use that same port in the webhook URL.
+
 ## Supported events
 
 `server.py` executes the actions listed for each event type in [tasks.json](tasks.json) and ignores events that are not configured there.

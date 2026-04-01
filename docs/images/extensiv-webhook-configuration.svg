@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1120" viewBox="0 0 960 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Suggested Extensiv webhook configuration</title>
+  <desc id="desc">Illustration of the Extensiv Customers greater than Event Notifications screen showing the recommended webhook values for this integration.</desc>
+  <style>
+    .bg { fill: #f4f5f7; }
+    .panel { fill: #ffffff; stroke: #d9dee5; stroke-width: 1; }
+    .header { fill: #8ea5b7; }
+    .label { fill: #5c6975; font: 14px Arial, Helvetica, sans-serif; }
+    .small { fill: #7b8792; font: 13px Arial, Helvetica, sans-serif; }
+    .value { fill: #1e2a35; font: bold 18px Arial, Helvetica, sans-serif; }
+    .value-sm { fill: #1e2a35; font: bold 16px Arial, Helvetica, sans-serif; }
+    .title { fill: #ffffff; font: bold 18px Arial, Helvetica, sans-serif; letter-spacing: 0.4px; }
+    .section { fill: #ffffff; font: bold 14px Arial, Helvetica, sans-serif; }
+    .line { stroke: #d9dee5; stroke-width: 1; }
+    .input { fill: #ffffff; stroke: #b9c3cc; stroke-width: 1; }
+    .selected { fill: #00a7c4; stroke: #00a7c4; stroke-width: 1; }
+    .unselected { fill: #ffffff; stroke: #aeb8c2; stroke-width: 1.5; }
+    .check { fill: none; stroke: #ffffff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .button-cancel { fill: #ffffff; stroke: #f28b3c; stroke-width: 1.5; }
+    .button-save { fill: #0096aa; }
+    .button-text-cancel { fill: #d36f26; font: bold 16px Arial, Helvetica, sans-serif; }
+    .button-text-save { fill: #ffffff; font: bold 16px Arial, Helvetica, sans-serif; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="960" height="1120" />
+  <rect class="header" x="0" y="0" width="960" height="68" />
+  <text class="title" x="22" y="36">CONFIGURE WEBHOOK NOTIFICATIONS</text>
+
+  <rect class="panel" x="22" y="100" width="916" height="900" rx="2" />
+  <text class="section" x="34" y="124" fill="#2b3c4d">CONFIGURATION OPTIONS</text>
+  <line class="line" x1="22" y1="138" x2="938" y2="138" />
+
+  <text class="label" x="58" y="174">Webhook Scope</text>
+  <rect class="input" x="52" y="184" width="284" height="32" rx="3" />
+  <text class="value" x="64" y="206">Any Customer</text>
+  <text class="small" x="318" y="205">v</text>
+
+  <text class="label" x="346" y="174">Description *</text>
+  <rect class="input" x="342" y="184" width="560" height="32" rx="3" />
+  <text class="value" x="354" y="206">Voodoo Integration</text>
+
+  <text class="label" x="58" y="246">Destination URL (Requires secure URL) *</text>
+  <rect class="input" x="52" y="256" width="850" height="32" rx="3" />
+  <text class="value" x="64" y="278">https://your.domain.com:8443/</text>
+
+  <line class="line" x1="22" y1="320" x2="938" y2="320" />
+
+  <text class="label" x="44" y="350">Event Type *</text>
+  <rect class="input" x="38" y="358" width="440" height="34" rx="3" />
+  <text class="value" x="54" y="381">Order</text>
+  <text class="small" x="460" y="380">v</text>
+
+  <text class="label" x="38" y="420">Events</text>
+
+  <g transform="translate(44 438)">
+    <rect class="unselected" x="0" y="0" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="16">Created</text>
+    <rect class="unselected" x="0" y="48" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="64">Confirmed</text>
+    <rect class="unselected" x="0" y="96" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="112">Deleted</text>
+    <rect class="selected" x="0" y="144" width="20" height="20" rx="3" />
+    <path class="check" d="M5 10 L9 14 L15 6" />
+    <text class="value-sm" x="30" y="160">Excluded from pickjob</text>
+    <rect class="unselected" x="0" y="192" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="208">Pick job - done</text>
+  </g>
+
+  <g transform="translate(340 438)">
+    <rect class="unselected" x="0" y="0" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="16">Completed</text>
+    <rect class="unselected" x="0" y="48" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="64">Unconfirmed</text>
+    <rect class="unselected" x="0" y="96" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="112">Transferred</text>
+    <rect class="selected" x="0" y="144" width="20" height="20" rx="3" />
+    <path class="check" d="M5 10 L9 14 L15 6" />
+    <text class="value-sm" x="30" y="160">Pick job - user assigned</text>
+    <rect class="unselected" x="0" y="192" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="208">Pack - started</text>
+  </g>
+
+  <g transform="translate(640 438)">
+    <rect class="unselected" x="0" y="0" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="16">Updated</text>
+    <rect class="unselected" x="0" y="48" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="64">Cancelled</text>
+    <rect class="unselected" x="0" y="96" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="112">Fully allocated</text>
+    <rect class="selected" x="0" y="144" width="20" height="20" rx="3" />
+    <path class="check" d="M5 10 L9 14 L15 6" />
+    <text class="value-sm" x="30" y="160">Pick job - user unassigned</text>
+    <rect class="unselected" x="0" y="192" width="20" height="20" rx="3" />
+    <text class="value-sm" x="30" y="208">Pack - complete</text>
+  </g>
+
+  <text class="label" x="38" y="692">Include Resources</text>
+  <g transform="translate(44 710)">
+    <rect class="selected" x="0" y="0" width="20" height="20" rx="3" />
+    <path class="check" d="M5 10 L9 14 L15 6" />
+    <text class="value-sm" x="30" y="16">Include resource in payload</text>
+  </g>
+
+  <text class="label" x="38" y="782">Resource Options</text>
+
+  <g transform="translate(44 800)">
+    <rect class="selected" x="0" y="0" width="20" height="20" rx="3" />
+    <path class="check" d="M5 10 L9 14 L15 6" />
+    <text class="value-sm" x="34" y="16">Order custom fields</text>
+
+    <rect class="selected" x="0" y="48" width="20" height="20" rx="3" />
+    <path class="check" d="M5 58 L9 62 L15 54" />
+    <text class="value-sm" x="34" y="64">Contacts</text>
+
+    <rect class="selected" x="0" y="96" width="20" height="20" rx="3" />
+    <path class="check" d="M5 106 L9 110 L15 102" />
+    <text class="value-sm" x="34" y="112">Outbound serial numbers</text>
+
+    <rect class="selected" x="0" y="144" width="20" height="20" rx="3" />
+    <path class="check" d="M5 154 L9 158 L15 150" />
+    <text class="value-sm" x="34" y="160">Parcel options</text>
+  </g>
+
+  <g transform="translate(340 800)">
+    <rect class="selected" x="0" y="0" width="20" height="20" rx="3" />
+    <path class="check" d="M5 10 L9 14 L15 6" />
+    <text class="value-sm" x="34" y="16">Packages</text>
+
+    <rect class="selected" x="0" y="48" width="20" height="20" rx="3" />
+    <path class="check" d="M5 58 L9 62 L15 54" />
+    <text class="value-sm" x="34" y="64">Billing details</text>
+
+    <rect class="selected" x="0" y="96" width="20" height="20" rx="3" />
+    <path class="check" d="M5 106 L9 110 L15 102" />
+    <text class="value-sm" x="34" y="112">Small parcel</text>
+  </g>
+
+  <g transform="translate(640 800)">
+    <rect class="selected" x="0" y="0" width="20" height="20" rx="3" />
+    <path class="check" d="M5 10 L9 14 L15 6" />
+    <text class="value-sm" x="34" y="16">Order items</text>
+
+    <line class="line" x1="12" y1="28" x2="12" y2="134" />
+    <line class="line" x1="12" y1="58" x2="26" y2="58" />
+    <line class="line" x1="12" y1="106" x2="26" y2="106" />
+    <line class="line" x1="12" y1="154" x2="26" y2="154" />
+
+    <rect class="unselected" x="28" y="38" width="20" height="20" rx="3" />
+    <text class="value-sm" x="58" y="54">Item custom fields</text>
+
+    <rect class="selected" x="28" y="86" width="20" height="20" rx="3" />
+    <path class="check" d="M33 96 L37 100 L43 92" />
+    <text class="value-sm" x="58" y="102">Allocations</text>
+
+    <rect class="selected" x="28" y="134" width="20" height="20" rx="3" />
+    <path class="check" d="M33 144 L37 148 L43 140" />
+    <text class="value-sm" x="58" y="150">Allocations with detail</text>
+  </g>
+
+  <rect class="button-cancel" x="368" y="1030" width="104" height="32" rx="16" />
+  <text class="button-text-cancel" x="391" y="1051">Cancel</text>
+  <rect class="button-save" x="486" y="1030" width="90" height="32" rx="16" />
+  <text class="button-text-save" x="516" y="1051">Save</text>
+</svg>
