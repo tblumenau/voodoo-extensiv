@@ -73,6 +73,53 @@ Example:
 }
 ```
 
+### `tasks.json` format
+
+`tasks.json` maps each Extensiv webhook event type to an ordered list of actions for Voodoo. The server looks up the incoming event name, then runs each action in the listed order.
+
+Format:
+
+```json
+{
+  "ExtensivEventName": ["ACTION_ONE", "ACTION_TWO"]
+}
+```
+
+Rules:
+
+- Each top-level key is an Extensiv event type such as `OrderPickJobUserAssigned`
+- Each value is an array of action names
+- Actions are executed in order, so `["DELETE", "ADD"]` behaves differently from `["ADD", "DELETE"]`
+- Action names are normalized to uppercase at runtime, but uppercase values are recommended for readability
+- Events not listed in `tasks.json` are logged and ignored
+- Unknown action names are logged as warnings and skipped
+
+### Available actions in `tasks.json`
+
+| Action | What it does | Voodoo API call | Notes |
+|--------|---------------|-----------------|-------|
+| `DELETE` | Removes the order from Voodoo | `DELETE /api/order/{order_id}/` | Commonly used before `ADD` so the latest order data replaces any older copy. If the order does not exist yet, the failure is logged as a warning and processing continues. |
+| `ADD` | Creates or re-creates the order in Voodoo using picks extracted from the Extensiv payload | `POST /api/order/` | Sends `order_number` plus `items[]` built from Extensiv allocations. |
+| `LAUNCH` | Launches an existing Voodoo order | `POST /api/order/{order_id}/launch/` | Use this after `ADD` if your Voodoo workflow should start immediately after creation. |
+| `ABORT` | Aborts an existing Voodoo order | `POST /api/order/{order_id}/abort/` | Useful when an Extensiv event means work should stop for an order already in progress. |
+
+### Common `tasks.json` patterns
+
+```json
+{
+  "OrderPickJobUserAssigned": ["DELETE", "ADD"],
+  "OrderPickJobUserUnassigned": ["DELETE", "ADD"],
+  "OrderExcludedFromPickJob": ["DELETE"]
+}
+```
+
+What these do:
+
+- `["DELETE", "ADD"]`: replace the current Voodoo order with a fresh version built from the newest Extensiv payload
+- `["DELETE"]`: remove the order from Voodoo and do not recreate it
+
+You can also use sequences such as `["ADD", "LAUNCH"]` or `["ABORT", "DELETE"]` if that matches your Voodoo workflow. The important detail is that the array order is the execution order.
+
 ## Configure the Extensiv webhook
 
 In Extensiv 3PL Manager, open `Customers > Event Notifications` and create a webhook with the following recommended settings:
@@ -89,7 +136,7 @@ In Extensiv 3PL Manager, open `Customers > Event Notifications` and create a web
 
 Replace `your.domain.com` with the public hostname on your TLS certificate. If you change `SERVER_PORT` in `.env`, use that same port in the webhook URL.
 
-## Supported events
+## Default configured events
 
 `server.py` executes the actions listed for each event type in [tasks.json](tasks.json) and ignores events that are not configured there.
 
