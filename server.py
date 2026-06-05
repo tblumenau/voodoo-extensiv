@@ -66,6 +66,8 @@ CONFIGURATION (.env file)
     LOG_FILE            — path to the log file (default: webhook.log)
     VOODOO_API_ENDPOINT — base URL of the Voodoo Robotics Orders API
     VOODOO_API_KEY      — API key used to authenticate with Voodoo
+    VOODOO_API_TIMEOUT_SECONDS — timeout for outbound Voodoo API requests
+                                                (default: 30)
     TASKS_FILE          — path to a JSON file mapping event types to action lists
                                                 e.g. tasks.json
     TASKS               — legacy inline JSON mapping (still supported but not
@@ -118,6 +120,34 @@ def parse_log_level(level_name):
         return level, normalized_level
 
     return logging.INFO, "INFO"
+
+
+def parse_positive_float(value, default_value, setting_name):
+    """Parse a positive float from configuration, falling back on invalid input."""
+    raw_value = (value or "").strip()
+    if not raw_value:
+        return default_value
+
+    try:
+        parsed_value = float(raw_value)
+    except (TypeError, ValueError):
+        logger.warning(
+            "Invalid %s %r; defaulting to %.1f seconds",
+            setting_name,
+            value,
+            default_value,
+        )
+        return default_value
+
+    if parsed_value <= 0:
+        logger.warning(
+            "%s must be greater than zero; defaulting to %.1f seconds",
+            setting_name,
+            default_value,
+        )
+        return default_value
+
+    return parsed_value
 
 
 def load_cached_extensiv_key(cache_file_path):
@@ -323,17 +353,48 @@ class DebugHTTPServer(ThreadingMixIn, HTTPServer):
     tight_security = False
     extensiv_public_key = None
     tasks_config = {}
+    ssl_context = None
+    tls_handshake_timeout = 10.0
 
-    def get_request(self):
-        # The TLS handshake happens inside get_request().  If a client sends
-        # garbage or plain HTTP to an HTTPS port, ssl.SSLError is raised here.
-        # The base class catches OSError (parent of SSLError) and silently
-        # discards it.  We log it before re-raising so you can see the error.
+    def process_request_thread(self, request, client_address):
+        # Keep the listening socket plain so accept() stays cheap.
+        # TLS handshakes happen here in the worker thread, which prevents
+        # a stalled client from wedging the single accept loop.
+        active_request = request
+
         try:
-            return super().get_request()
+            if self.ssl_context is not None:
+                request.settimeout(self.tls_handshake_timeout)
+                active_request = self.ssl_context.wrap_socket(
+                    request,
+                    server_side=True,
+                    do_handshake_on_connect=False,
+                )
+                active_request.do_handshake()
+                active_request.settimeout(None)
+
+            self.finish_request(active_request, client_address)
         except ssl.SSLError as e:
-            logger.error("TLS handshake failed: %s", e)
-            raise  # re-raise so the base class cleans up the socket
+            logger.error(
+                "TLS handshake failed from %s:%s: %s",
+                client_address[0],
+                client_address[1],
+                e,
+            )
+        except OSError as e:
+            logger.error(
+                "Connection setup failed from %s:%s: %s",
+                client_address[0],
+                client_address[1],
+                e,
+            )
+        except Exception:
+            self.handle_error(active_request, client_address)
+        finally:
+            try:
+                self.shutdown_request(active_request)
+            except OSError:
+                self.close_request(active_request)
 
     def handle_error(self, request, client_address):
         # Called when an exception escapes from the request handler.
@@ -351,8 +412,9 @@ class DebugHTTPServer(ThreadingMixIn, HTTPServer):
 #
 # This is the core business logic.  It takes the raw Extensiv JSON payload
 # and extracts:
-#   - order_id  (string) — the Extensiv Order ID
-#   - picks     (list of dicts) — one dict per allocation with:
+#   - order_id        (string) — the Extensiv Order ID
+#   - tracking_number (string) — the parcel tracking number, if present
+#   - picks           (list of dicts) — one dict per allocation with:
 #       - "qty"      (int)         — how many units to pick
 #       - "sku"      (str)         — the SKU to pick
 #       - "location" (str)         — warehouse location name
@@ -362,22 +424,23 @@ class DebugHTTPServer(ThreadingMixIn, HTTPServer):
 # See exampleOrder.json for the full structure.
 # ---------------------------------------------------------------------------
 def parse_picks_from_payload(payload):
-    """Extract Order ID and a list of pick dictionaries from an Extensiv webhook payload.
+    """Extract order details and pick dictionaries from an Extensiv webhook payload.
 
     Args:
         payload: The parsed JSON dict from the webhook body.
 
     Returns:
-        A tuple of (order_id, picks):
-            order_id — string, e.g. "24422720"
-            picks    — list of dicts, each with keys: qty, sku, location, lot
+        A tuple of (order_id, tracking_number, picks):
+            order_id        — string, e.g. "24422720"
+            tracking_number — string or None, e.g. "9261290260112193614807"
+            picks           — list of dicts, each with keys: qty, sku, location, lot
                        Example:
                        [
                            {"qty": 1, "sku": "RIT0304", "location": "03-19-01", "lot": None},
                            {"qty": 1, "sku": "BA04050", "location": "NOR-06-01", "lot": "DO0824USA0004"}
                        ]
 
-        Returns (None, []) if the payload is not a recognized order event.
+        Returns (None, None, []) if the payload is not a recognized order event.
     """
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug(
@@ -395,6 +458,7 @@ def parse_picks_from_payload(payload):
     # We try the first (more reliable) and fall back to the second.
     # -----------------------------------------------------------------------
     order_id = None
+    tracking_number = None
     picks = []
 
     # Navigate to the order body — this is where all the item data lives.
@@ -403,6 +467,7 @@ def parse_picks_from_payload(payload):
     resource = payload.get("resource", {})
     body = resource.get("body", {})
     read_only = body.get("readOnly", {})
+    routing_info = body.get("routingInfo", {})
 
     # Try to get orderId from the structured body
     raw_order_id = read_only.get("orderId")
@@ -421,7 +486,9 @@ def parse_picks_from_payload(payload):
 
     if not order_id:
         # Not an order event, or the payload format is unexpected
-        return None, []
+        return None, None, []
+
+    tracking_number = routing_info.get("trackingNumber") or None
 
     # -----------------------------------------------------------------------
     # Step 2: Walk through each order item's allocations to build picks
@@ -484,7 +551,7 @@ def parse_picks_from_payload(payload):
             }
             picks.append(pick)
 
-    return order_id, picks
+    return order_id, tracking_number, picks
 
 
 # ---------------------------------------------------------------------------
@@ -631,7 +698,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
         # the nested JSON structure.  See that function's docstring for
         # details on what it returns.
         # ------------------------------------------------------------------
-        order_id, picks = parse_picks_from_payload(payload)
+        order_id, tracking_number, picks = parse_picks_from_payload(payload)
 
         if order_id is None:
             # Not an order event, or couldn't find the order ID
@@ -651,6 +718,8 @@ class WebhookHandler(BaseHTTPRequestHandler):
         print("=" * 60)
         print(f"ORDER ID: {order_id}")
         print(f"EVENT:    {event_type}")
+        if tracking_number:
+            print(f"TRACKING: {tracking_number}")
         print(f"PICKS:    {len(picks)} allocation(s)")
         print("-" * 60)
 
@@ -668,7 +737,15 @@ class WebhookHandler(BaseHTTPRequestHandler):
         print()
 
         # Also log the picks so they appear in the log file
-        logger.info("Order %s: %d pick(s) extracted", order_id, len(picks))
+        if tracking_number:
+            logger.info(
+                "Order %s: tracking=%s, %d pick(s) extracted",
+                order_id,
+                tracking_number,
+                len(picks),
+            )
+        else:
+            logger.info("Order %s: %d pick(s) extracted", order_id, len(picks))
         for i, pick in enumerate(picks, start=1):
             logger.info(
                 "  Pick %d: qty=%d  sku=%s  location=%s  lot=%s",
@@ -697,6 +774,11 @@ class WebhookHandler(BaseHTTPRequestHandler):
         # ------------------------------------------------------------------
         voodoo_api_endpoint = os.environ.get("VOODOO_API_ENDPOINT", "").strip()
         voodoo_api_key = os.environ.get("VOODOO_API_KEY", "").strip()
+        voodoo_api_timeout = parse_positive_float(
+            os.environ.get("VOODOO_API_TIMEOUT_SECONDS"),
+            30.0,
+            "VOODOO_API_TIMEOUT_SECONDS",
+        )
 
         if not voodoo_api_endpoint or not voodoo_api_key:
             logger.warning("VOODOO_API_ENDPOINT or VOODOO_API_KEY not set in .env file")
@@ -738,8 +820,14 @@ class WebhookHandler(BaseHTTPRequestHandler):
             logger.info("No tasks configured for event type: %s", event_type)
             return
 
-        # Build the order payload (used by the ADD action)
-        new_order = {"order_number": order_id, "items": []}
+        # Build the order payload (used by the ADD action).
+        # Voodoo expects a shipment container here, so we send one shipment
+        # per Extensiv order and use the tracking number when available.
+        shipment_number = tracking_number or order_id
+        new_order = {
+            "order_number": order_id,
+            "shipments": [{"shipment_number": shipment_number, "items": []}],
+        }
         for pick in picks:
             item = {
                 "SKU": pick["sku"],
@@ -749,7 +837,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
             # Only add "description" when a lot number is present.
             if pick["lot"]:
                 item["description"] = pick["lot"]
-            new_order["items"].append(item)
+            new_order["shipments"][0]["items"].append(item)
 
         # Execute each action in order
         for action in actions:
@@ -757,10 +845,20 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
             if action == "DELETE":
                 try:
-                    response = requests.delete(delete_endpoint, headers=headers)
+                    response = requests.delete(
+                        delete_endpoint,
+                        headers=headers,
+                        timeout=voodoo_api_timeout,
+                    )
                     response.raise_for_status()
                     logger.info(
                         "Deleted order from Voodoo (status %s)", response.status_code
+                    )
+                except requests.Timeout:
+                    logger.warning(
+                        "Delete timed out after %.1f seconds for order %s",
+                        voodoo_api_timeout,
+                        order_id,
                     )
                 except requests.RequestException as e:
                     logger.warning("Delete failed (order may not exist yet): %s", e)
@@ -768,34 +866,63 @@ class WebhookHandler(BaseHTTPRequestHandler):
             elif action == "ADD":
                 try:
                     response = requests.post(
-                        order_endpoint, headers=headers, json=new_order
+                        order_endpoint,
+                        headers=headers,
+                        json=new_order,
+                        timeout=voodoo_api_timeout,
                     )
                     response.raise_for_status()
                     logger.info("Created order in Voodoo: %s", response.json())
+                except requests.Timeout:
+                    logger.error(
+                        "Timed out creating order %s in Voodoo after %.1f seconds",
+                        order_id,
+                        voodoo_api_timeout,
+                    )
                 except requests.RequestException as e:
                     logger.error("Failed to create order in Voodoo: %s", e)
                     logger.debug("Request payload: %s", json.dumps(new_order, indent=2))
 
             elif action == "LAUNCH":
                 try:
-                    response = requests.post(launch_endpoint, headers=headers)
+                    response = requests.post(
+                        launch_endpoint,
+                        headers=headers,
+                        timeout=voodoo_api_timeout,
+                    )
                     response.raise_for_status()
                     logger.info(
                         "Launched order %s in Voodoo (status %s)",
                         order_id,
                         response.status_code,
                     )
+                except requests.Timeout:
+                    logger.error(
+                        "Timed out launching order %s in Voodoo after %.1f seconds",
+                        order_id,
+                        voodoo_api_timeout,
+                    )
                 except requests.RequestException as e:
                     logger.error("Failed to launch order %s in Voodoo: %s", order_id, e)
 
             elif action == "ABORT":
                 try:
-                    response = requests.post(abort_endpoint, headers=headers)
+                    response = requests.post(
+                        abort_endpoint,
+                        headers=headers,
+                        timeout=voodoo_api_timeout,
+                    )
                     response.raise_for_status()
                     logger.info(
                         "Aborted order %s in Voodoo (status %s)",
                         order_id,
                         response.status_code,
+                    )
+                except requests.Timeout:
+                    logger.error(
+                        "Timed out aborting order %s in Voodoo after %.1f seconds",
+                        order_id,
+                        voodoo_api_timeout,
                     )
                 except requests.RequestException as e:
                     logger.error("Failed to abort order %s in Voodoo: %s", order_id, e)
@@ -927,8 +1054,9 @@ def main():
         ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2  # no TLS 1.0/1.1
         ssl_context.load_cert_chain(certfile=cert_file, keyfile=key_file)
 
-        # Wrap the server socket in TLS
-        server.socket = ssl_context.wrap_socket(server.socket, server_side=True)
+        # Keep the listening socket plain and wrap accepted connections in the
+        # worker thread so one stalled handshake cannot block new accepts.
+        server.ssl_context = ssl_context
         scheme = "https"
     else:
         scheme = "http"

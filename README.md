@@ -57,6 +57,7 @@ Copy `.env.example` to `.env` and set:
 | `LOG_LEVEL`                                   | Logging threshold: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` | `INFO`            |
 | `VOODOO_API_ENDPOINT`                         | Base URL of the Voodoo Orders API             | —                                     |
 | `VOODOO_API_KEY`                              | API key for Voodoo authentication             | —                                     |
+| `VOODOO_API_TIMEOUT_SECONDS`                  | Timeout for outbound Voodoo API calls         | `30`                                  |
 | `TASKS_FILE`                                  | Path to JSON file with event actions          | `tasks.json`                          |
 | `TIGHT_SECURITY`                              | Require HTTPS and Extensiv signatures         | `true`                                |
 | `EXTENSIV_PUBLIC_KEY_CACHE_FILE`              | JSON cache for Extensiv key endpoint response | `extensiv_public_key_cache.json`      |
@@ -99,7 +100,7 @@ Rules:
 | Action | What it does | Voodoo API call | Notes |
 |--------|---------------|-----------------|-------|
 | `DELETE` | Removes the order from Voodoo | `DELETE /api/order/{order_id}/` | Commonly used before `ADD` so the latest order data replaces any older copy. If the order does not exist yet, the failure is logged as a warning and processing continues. |
-| `ADD` | Creates or re-creates the order in Voodoo using picks extracted from the Extensiv payload | `POST /api/order/` | Sends `order_number` plus `items[]` built from Extensiv allocations. |
+| `ADD` | Creates or re-creates the order in Voodoo using picks extracted from the Extensiv payload | `POST /api/order/` | Sends `order_number` plus `shipments[]`, using Extensiv `routingInfo.trackingNumber` as `shipment_number` when present. |
 | `LAUNCH` | Launches an existing Voodoo order | `POST /api/order/{order_id}/launch/` | Use this after `ADD` if your Voodoo workflow should start immediately after creation. |
 | `ABORT` | Aborts an existing Voodoo order | `POST /api/order/{order_id}/abort/` | Useful when an Extensiv event means work should stop for an order already in progress. |
 
